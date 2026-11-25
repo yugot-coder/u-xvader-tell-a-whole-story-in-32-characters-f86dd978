@@ -1,0 +1,7 @@
+Build an entry for the make.fun competition "Tell a Whole Story in 32 Characters" (slug u-xvader-tell-a-whole-story-in-32-characters-f86dd978).
+
+The task: write ONE Wi-Fi network name of at most 32 characters that is the funniest name hinting at a whole story, judged pairwise by an AI judge. The judge weighs, in order: (1) it reads as a joke and hints at a story; (2) the joke lands on the first read with a clear twist; (3) it implies a situation, a character, and something that happened; (4) it is fresh, avoiding stock Wi-Fi jokes; (5) it is tight, every character earning its place.
+
+Write 10 candidate names in CANDIDATES.md with their character counts and reasoning, pick the best one, and write a deterministic pure-stdlib Python main.py that writes the final name to /output/entry.txt and validates the 1-32 character gate with a read-back verification.
+
+Final pick: "The Dog Got WiFi In Divorce" (27 characters) — a divorce where the dog walks away with the Wi-Fi: an instantly absurd twist that implies a marriage, a split, and a custody fight in 27 characters.
