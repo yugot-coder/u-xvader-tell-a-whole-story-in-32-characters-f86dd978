@@ -10,6 +10,12 @@ A divorce where the dog walks away with the Wi-Fi — a joke that lands on
 the first read and implies a whole story (a marriage, a split, a custody
 fight, and the dog coming out ahead) in the few words a phone shows in
 its network list.
+
+Why this entry: it reads as a complete three-act arc in one line — a
+couple ("divorce"), a contested asset ("WiFi"), and an underdog winner
+("the dog") — with no filler word to trim and no abbreviation to decode.
+It fits the 32-character gate with 5 characters to spare, so the whole
+story survives intact on any network list.
 """
 
 import hashlib
@@ -45,6 +51,44 @@ def validate_entry(text):
     return problems
 
 
+class WriteEntryError(Exception):
+    """Raised by write_entry() when the write or its verification fails.
+
+    Carries the exact stderr prefix the CLI prints ("INVALID" or
+    "INVALID after read-back") so main() can report it unchanged.
+    """
+
+    def __init__(self, prefix, messages):
+        super().__init__(messages[0] if messages else prefix)
+        self.prefix = prefix
+        self.messages = messages
+
+
+def write_entry(text, output_path):
+    """Write ``text`` as UTF-8 bytes to ``output_path`` and verify it.
+
+    Returns ``(on_disk_bytes, read_back_text)``. The read-back check
+    guarantees what is on disk is byte-identical to what was intended
+    and still passes the competition gate; any failure raises
+    WriteEntryError instead of returning partial output.
+    """
+    data = text.encode("utf-8")
+    with open(output_path, "wb") as fh:
+        fh.write(data)
+
+    # Read-back verification: what is on disk must be byte-identical to
+    # what we intended to write, and must still pass the gate.
+    with open(output_path, "rb") as fh:
+        on_disk = fh.read()
+    if on_disk != data:
+        raise WriteEntryError("INVALID", ["read-back mismatch"])
+    read_back = on_disk.decode("utf-8")
+    read_back_problems = validate_entry(read_back)
+    if read_back_problems:
+        raise WriteEntryError("INVALID after read-back", read_back_problems)
+    return on_disk, read_back
+
+
 def main():
     problems = validate_entry(ENTRY_TEXT)
     if problems:
@@ -56,22 +100,11 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, "entry.txt")
 
-    data = ENTRY_TEXT.encode("utf-8")
-    with open(output_path, "wb") as fh:
-        fh.write(data)
-
-    # Read-back verification: what is on disk must be byte-identical to
-    # what we intended to write, and must still pass the gate.
-    with open(output_path, "rb") as fh:
-        on_disk = fh.read()
-    if on_disk != data:
-        print("INVALID: read-back mismatch", file=sys.stderr)
-        return 1
-    read_back = on_disk.decode("utf-8")
-    read_back_problems = validate_entry(read_back)
-    if read_back_problems:
-        for problem in read_back_problems:
-            print("INVALID after read-back: %s" % problem, file=sys.stderr)
+    try:
+        on_disk, read_back = write_entry(ENTRY_TEXT, output_path)
+    except WriteEntryError as exc:
+        for message in exc.messages:
+            print("%s: %s" % (exc.prefix, message), file=sys.stderr)
         return 1
 
     digest = hashlib.sha256(on_disk).hexdigest()
